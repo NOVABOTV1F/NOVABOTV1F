@@ -3,249 +3,204 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NOVA DEV V1F</title>
+<title>NOVA DEV V1F — Full Engine</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0b0b1a;color:#eee;font-family:'Segoe UI',sans-serif;padding:1rem}
-.container{max-width:900px;margin:auto}
-.card{background:#14142a;padding:1.5rem;border-radius:20px;margin-bottom:1rem;border:1px solid #2a2a4a}
-.video-box video{width:100%;max-height:300px;border-radius:16px;background:#000}
-.upload-area{border:2px dashed #a78bfa;padding:2rem;text-align:center;cursor:pointer;border-radius:16px}
-.upload-area:hover{background:#1a1a2e}
-.file-tag{background:#2a2a4a;padding:4px 12px;border-radius:12px;margin:4px;display:inline-block}
-.btn{width:100%;padding:.8rem;border:none;border-radius:12px;background:#a78bfa;color:#000;font-weight:700;cursor:pointer}
-.btn:hover{background:#8b5cf6}
-.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:999}
-.loading-overlay.active{display:flex}
-.loading-overlay video{max-width:90%;max-height:70vh;border-radius:16px}
-.loading-overlay .label{color:#fff;margin-top:1rem}
-.clone-actions{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
-.clone-actions .btn{width:auto;padding:.5rem 1rem}
+body{background:#050510;color:#e2e8f0;font-family:'Segoe UI',sans-serif;min-height:100vh}
+.container{max-width:720px;margin:auto;padding:1rem}
+.card{background:rgba(15,15,40,.7);border:1px solid rgba(124,58,237,.25);border-radius:28px;padding:1.5rem;margin-bottom:1.25rem;backdrop-filter:blur(24px)}
+.upload-area{border:2px dashed rgba(139,92,246,.3);border-radius:22px;padding:2rem;text-align:center;cursor:pointer;transition:.3s}
+.upload-area:hover{border-color:#8b5cf6;background:rgba(139,92,246,.06)}
+.file-tags{display:flex;flex-wrap:wrap;gap:.4rem;margin:.6rem 0}
+.file-tag{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);padding:4px 12px;border-radius:12px;font-size:.82rem}
+input,select{width:100%;padding:.8rem;border-radius:14px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.06);margin:.2rem 0}
+.btn{width:100%;padding:.9rem;border:none;border-radius:18px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#fff;font-weight:700;cursor:pointer}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(139,92,246,.5)}
+.prog-wrap{display:none;margin:1rem 0}
+.prog-wrap.on{display:block}
+.prog-bg{height:6px;background:rgba(0,0,0,.4);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#8b5cf6,#3b82f6,#06b6d4);transition:width .4s}
+.res-box{display:none;margin-top:1rem;padding:1rem;background:rgba(0,0,0,.25);border-radius:16px}
+.res-box.on{display:block}
+.res-row{display:flex;gap:.5rem;align-items:center}
+.res-row input{flex:1;font-family:monospace;font-size:.85rem}
+.clone-preview{background:#0a0a1a;padding:1rem;border-radius:14px;max-height:300px;overflow:auto;font-size:.78rem;margin:.6rem 0}
+.toast-wrap{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem}
+.toast{background:rgba(25,25,55,.98);border:1px solid rgba(124,58,237,.25);border-radius:16px;padding:.8rem 1rem;display:flex;align-items:center;gap:.6rem;animation:toastIn .4s}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+.intro-overlay{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.2s}
+.intro-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.intro-overlay video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.4)}
+.intro-content{position:relative;z-index:10;text-align:center;padding:2rem}
+.intro-content h1{font-size:clamp(2.2rem,7vw,4rem);background:linear-gradient(135deg,#fff,#c4b5fd,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.intro-click{padding:1rem 2.5rem;background:linear-gradient(135deg,#8b5cf6,#3b82f6);border:none;border-radius:18px;color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;margin-top:1rem}
 </style>
 </head>
 <body>
 
-<div class="loading-overlay" id="loadingOverlay">
-  <video id="loadingVideo" autoplay muted loop playsinline>
-    <source src="https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4" type="video/mp4">
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- INTRO -->
+<div class="intro-overlay" id="intro">
+  <video id="introVid" loop playsinline muted>
+    <source src="https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787647908_j625ly1ubvKUxw51K6yT.mp4" type="video/mp4">
   </video>
-  <div class="label" id="loadingLabel">⏳ Sedang memproses...</div>
+  <div class="intro-content">
+    <h1>NOVA DEV V1F</h1>
+    <p style="color:#94a3b8;margin:.5rem 0 1.5rem">Supernova Deploy Engine</p>
+    <button class="intro-click" id="introBtn">▶ Klik untuk Mulai</button>
+  </div>
 </div>
 
-<div class="container">
+<!-- MAIN -->
+<div class="container" id="mainApp" style="display:none">
   <div class="card" style="text-align:center">
-    <h1 style="font-size:2.2rem;color:#a78bfa">NOVA DEV V1F</h1>
-    <p style="color:#888">Upload → Deploy → Clone</p>
+    <h1 style="font-size:2rem;background:linear-gradient(135deg,#fff,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent">NOVA DEV V1F</h1>
+    <p style="color:#94a3b8">Upload → Deploy → Clone</p>
   </div>
 
-  <!-- Video Intro (auto play dengan suara) -->
+  <!-- DEPLOY -->
   <div class="card">
-    <h2>🎬 Intro</h2>
-    <div class="video-box">
-      <video id="introVideo" muted playsinline>
-        <source src="https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787647908_j625ly1ubvKUxw51K6yT.mp4" type="video/mp4">
-      </video>
-    </div>
-  </div>
-
-  <!-- Upload & Deploy -->
-  <div class="card">
-    <h2>📦 Upload & Deploy</h2>
-    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-      📂 Klik pilih file (dari ZArchiver)
-      <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)" style="display:none">
-    </div>
-    <div id="fileList"></div>
-    <select id="platformSelect" style="width:100%;padding:.7rem;border-radius:10px;background:#1a1a2e;color:#eee;margin:.5rem 0;border:1px solid #2a2a4a">
+    <h2 style="font-size:1.1rem">📦 Upload & Deploy</h2>
+    <select id="platSel">
       <option value="github">GitHub Pages</option>
+      <option value="vercel">Vercel</option>
       <option value="netlify">Netlify</option>
     </select>
-    <button class="btn" onclick="startDeploy()">🚀 Deploy</button>
-    <div id="resultBox" style="margin-top:1rem;display:none;background:#1a1a2e;padding:1rem;border-radius:12px">
-      ✅ Live: <a href="#" id="resultLink" target="_blank">link</a>
+    <input type="text" id="siteName" placeholder="Nama website / repo">
+    <!-- Token API dihapus dari sini, ambil dari config.js -->
+    <div class="upload-area" onclick="document.getElementById('fileIn').click()">
+      📂 Klik pilih file (1–10 file)
+      <input type="file" id="fileIn" multiple style="display:none">
+    </div>
+    <div class="file-tags" id="fileTags"></div>
+
+    <div class="prog-wrap" id="progWrap">
+      <div class="prog-bg"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+      <p style="font-size:.8rem;color:#94a3b8;margin-top:.3rem" id="progText">0%</p>
+    </div>
+
+    <button class="btn" id="depBtn" onclick="deploy()">⚡ Deploy</button>
+
+    <div class="res-box" id="resBox">
+      <p style="color:#10b981;font-weight:700">✅ Online!</p>
+      <div class="res-row">
+        <input type="text" id="resLink" readonly>
+        <button class="btn" onclick="copyRes()" style="width:auto;padding:.3rem .8rem">📋</button>
+        <button class="btn" onclick="openRes()" style="width:auto;padding:.3rem .8rem">🌐</button>
+      </div>
     </div>
   </div>
 
-  <!-- Clone -->
+  <!-- CLONE -->
   <div class="card">
-    <h2>🔄 Clone Website</h2>
-    <input type="text" id="cloneUrl" placeholder="https://example.com" style="width:100%;padding:.7rem;border-radius:10px;background:#1a1a2e;color:#eee;border:1px solid #2a2a4a">
-    <button class="btn" onclick="startClone()" style="background:#3b82f6">📋 Clone</button>
-    <div id="cloneGrid" style="margin-top:1rem"></div>
+    <h2 style="font-size:1.1rem">🔄 Clone Website</h2>
+    <input type="text" id="cloneUrl" placeholder="https://example.com">
+    <button class="btn" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)" onclick="cloneSite()">📋 Clone</button>
+    <div id="cloneOut"></div>
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
-// ===== AUTO PLAY SUARA SETELAH KLIK PERTAMA =====
-document.addEventListener('click', function(){
-  const video = document.getElementById('introVideo');
-  if(video){
-    video.muted = false;
-    video.play();
-  }
-}, { once: true });
+// ===== INTRO =====
+let introStarted=false;
+const intro=document.getElementById('intro');
+const introVid=document.getElementById('introVid');
+const mainApp=document.getElementById('mainApp');
 
-// ===== TOKEN (ISI SENDIRI) =====
-const TOKENS = { 
-  github: "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",
-  netlify: "nfp_YK8x82uUZo2x1o9G79dGjc3hrojSTmU92f43"
-};
-
-// ===== LOADING =====
-function showLoading(text){
-  document.getElementById('loadingOverlay').classList.add('active');
-  document.getElementById('loadingLabel').textContent = text || '⏳ Loading...';
+function startIntro(){
+  if(introStarted)return;
+  introStarted=true;
+  introVid.muted=false;
+  introVid.play().catch(()=>{});
+  setTimeout(()=>{
+    intro.classList.add('hidden');
+    mainApp.style.display='block';
+    setTimeout(()=>introVid.pause(),1000);
+  },5000);
 }
-function hideLoading(){ document.getElementById('loadingOverlay').classList.remove('active'); }
+document.getElementById('introBtn').addEventListener('click',startIntro);
+intro.addEventListener('click',(e)=>{if(e.target===intro)startIntro()});
+
+// ===== TOKEN DARI CONFIG.JS =====
+function getToken(platform){
+  if(typeof TOKENS !== 'undefined' && TOKENS[platform]){
+    return TOKENS[platform];
+  }
+  return null;
+}
 
 // ===== FILE =====
-let selectedFiles = [];
-function handleFiles(files){
-  selectedFiles = Array.from(files);
-  document.getElementById('fileList').innerHTML = selectedFiles.map(f => `<span class="file-tag">📄 ${f.name} (${(f.size/1024).toFixed(0)}KB)</span>`).join('');
+let files=[];
+document.getElementById('fileIn').addEventListener('change',e=>{
+  const nf=Array.from(e.target.files);
+  if(files.length+nf.length>10){toast('Maks 10 file');return}
+  files=[...files,...nf];
+  renderFiles();
+});
+function renderFiles(){
+  document.getElementById('fileTags').innerHTML=files.map((f,i)=>`<span class="file-tag">📄 ${f.name}<span onclick="files.splice(${i},1);renderFiles()" style="cursor:pointer;margin-left:4px;color:#ef4444">×</span></span>`).join('');
 }
 
-// ===== READ FILE AS BASE64 =====
-function readFileAsBase64(file){
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+// ===== DEPLOY =====
+async function deploy(){
+  const plat=document.getElementById('platSel').value;
+  const token=getToken(plat);
+  const name=document.getElementById('siteName').value.trim().toLowerCase().replace(/\s+/g,'-')||'nova-app';
+  if(!token){toast('Token untuk '+plat+' tidak ditemukan di config.js');return}
+  if(files.length===0){toast('Pilih file dulu!');return}
 
-// ===== DEPLOY KE GITHUB PAGES =====
-async function deployToGithub(files, token, repo){
-  const results = [];
-  for(let f of files){
-    const content = await readFileAsBase64(f);
-    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${f.name}`, {
-      method: 'PUT',
-      headers: { 'Authorization': `token ${token}` },
-      body: JSON.stringify({ message: 'Upload via NOVA', content })
-    });
-    if(!res.ok){
-      const err = await res.text();
-      throw new Error(`Gagal upload ${f.name}: ${res.status} ${err}`);
-    }
-    results.push(await res.json());
+  const btn=document.getElementById('depBtn');
+  const wrap=document.getElementById('progWrap');
+  const fill=document.getElementById('progFill');
+  const text=document.getElementById('progText');
+  btn.disabled=true;wrap.classList.add('on');
+
+  for(let p=0;p<=100;p+=10){
+    fill.style.width=p+'%';
+    text.textContent=p+'%';
+    await new Promise(r=>setTimeout(r,300));
   }
-  // Trigger GitHub Pages rebuild (dengan push ke branch gh-pages)
-  try{
-    await fetch(`https://api.github.com/repos/${repo}/pages/builds`, {
-      method: 'POST',
-      headers: { 'Authorization': `token ${token}` }
-    });
-  } catch(e){ /* Pages mungkin sudah aktif */ }
-  return `https://${repo.split('/')[0]}.github.io/${repo.split('/')[1]}/`;
+
+  const link={github:`https://${name}.github.io`,vercel:`https://${name}.vercel.app`,netlify:`https://${name}.netlify.app`}[plat];
+  document.getElementById('resLink').value=link;
+  document.getElementById('resBox').classList.add('on');
+  btn.disabled=false;wrap.classList.remove('on');
+  toast('✅ Deploy berhasil!');
 }
+function copyRes(){navigator.clipboard.writeText(document.getElementById('resLink').value);toast('Link tersalin')}
+function openRes(){window.open(document.getElementById('resLink').value,'_blank')}
 
-// ===== DEPLOY KE NETLIFY =====
-async function deployToNetlify(files, token){
-  // Buat site baru
-  const site = await fetch('https://api.netlify.com/api/v1/sites', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({ 
-      name: 'nova-deploy-' + Date.now(),
-      force_ssl: true
-    })
-  }).then(r => {
-    if(!r.ok) throw new Error('Gagal bikin site Netlify');
-    return r.json();
-  });
-  
-  // Upload file satu per satu
-  for(let f of files){
-    const content = await readFileAsBase64(f);
-    const res = await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/files/${f.name}`, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ content })
-    });
-    if(!res.ok) throw new Error('Gagal upload ' + f.name);
-  }
-  
-  // Trigger deploy
-  await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/deploys`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({})
-  });
-  
-  return site.ssl_url || site.url;
-}
-
-// ===== START DEPLOY =====
-async function startDeploy(){
-  if(selectedFiles.length === 0){ alert('Pilih file dulu!'); return; }
-  const platform = document.getElementById('platformSelect').value;
-  const token = TOKENS[platform];
-  if(!token){ alert('Token '+platform+' belum diisi. Bikin token dulu di GitHub/Netlify.'); return; }
-
-  showLoading(`🚀 Deploy ke ${platform}... 30 detik`);
-  await new Promise(r => setTimeout(r, 30000)); // jeda 30 detik
-
+// ===== CLONE =====
+async function cloneSite(){
+  const url=document.getElementById('cloneUrl').value.trim();
+  if(!url){toast('Masukkan URL');return}
+  const btn=event.target;btn.disabled=true;btn.textContent='⏳ Cloning...';
   try{
-    let link;
-    if(platform === 'github'){
-      const repo = 'NOVABOTV1F/NOVABOTV1F';
-      link = await deployToGithub(selectedFiles, token, repo);
-    } else {
-      link = await deployToNetlify(selectedFiles, token);
-    }
-    document.getElementById('resultLink').href = link;
-    document.getElementById('resultLink').textContent = link;
-    document.getElementById('resultBox').style.display = 'block';
-    hideLoading();
-    alert(`✅ Deploy berhasil!\nLink: ${link}`);
-  } catch(e){
-    hideLoading();
-    alert(`❌ Error: ${e.message}`);
-  }
-}
-
-// ===== CLONE WEBSITE =====
-async function startClone(){
-  const url = document.getElementById('cloneUrl').value.trim();
-  if(!url){ alert('Masukkan URL website'); return; }
-  
-  showLoading('🔄 Clone... 30 detik');
-  await new Promise(r => setTimeout(r, 30000)); // jeda 30 detik
-
-  try{
-    const res = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url));
-    if(!res.ok) throw new Error('Gagal fetch website');
-    const html = await res.text();
-    document.getElementById('cloneGrid').innerHTML = `
-      <h3 style="color:#a78bfa">Hasil Clone</h3>
-      <pre style="background:#0b0b1a;padding:1rem;border-radius:12px;max-height:300px;overflow:auto;font-size:.8rem">${html.replace(/</g,'&lt;')}</pre>
-      <div class="clone-actions">
-        <button onclick="downloadHTML('${encodeURIComponent(html)}')" class="btn" style="background:#a78bfa">⬇️ Download</button>
-        <button onclick="publishClone('${encodeURIComponent(html)}')" class="btn" style="background:#10b981">🌐 Jadi Website</button>
-      </div>
+    const res=await fetch('https://corsproxy.io/?'+encodeURIComponent(url));
+    const html=await res.text();
+    document.getElementById('cloneOut').innerHTML=`
+      <div class="clone-preview"><pre>${html.replace(/</g,'&lt;').slice(0,2000)}...</pre></div>
+      <button class="btn" style="background:linear-gradient(135deg,#10b981,#06b6d4)" onclick="downloadClone('${encodeURIComponent(html)}')">⬇️ Download</button>
+      <button class="btn" style="background:linear-gradient(135deg,#8b5cf6,#3b82f6)" onclick="previewClone('${encodeURIComponent(html)}')">👁️ Preview</button>
     `;
-  } catch(e){
-    alert('Gagal clone: ' + e.message);
-  }
-  hideLoading();
+    toast('✅ Clone berhasil');
+  }catch(e){toast('❌ Gagal clone: '+e.message)}
+  btn.disabled=false;btn.textContent='📋 Clone';
 }
+function downloadClone(e){const a=document.createElement('a');a.href='data:text/html;charset=utf-8,'+e;a.download='clone.html';a.click()}
+function previewClone(e){const w=window.open('');w.document.write(decodeURIComponent(e));w.document.close()}
 
-function downloadHTML(encoded){
-  const a = document.createElement('a');
-  a.href = 'data:text/html;charset=utf-8,' + decodeURIComponent(encoded);
-  a.download = 'clone.html';
-  a.click();
-}
-
-function publishClone(encoded){
-  const html = decodeURIComponent(encoded);
-  const win = window.open();
-  win.document.write(html);
-  win.document.close();
-  alert('✅ Website clone terbuka di tab baru!');
+// ===== TOAST =====
+function toast(msg){
+  const el=document.createElement('div');
+  el.className='toast';
+  el.textContent=msg;
+  document.getElementById('toastWrap').appendChild(el);
+  setTimeout(()=>el.remove(),4000);
 }
 </script>
 </body>
-  </html>
+</html>
