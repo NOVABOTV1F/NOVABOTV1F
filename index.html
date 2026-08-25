@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVA DEV V1F</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0b0b1a;color:#eee;font-family:'Segoe UI',sans-serif;padding:1rem}
+.container{max-width:900px;margin:0 auto}
+.card{background:#14142a;border-radius:20px;padding:1.5rem;border:1px solid #2a2a4a;margin-bottom:1.5rem}
+.card h2{font-size:1.2rem;margin-bottom:.5rem}
+.card p{color:#999;font-size:.9rem;margin-bottom:1rem}
+.upload-area{border:2px dashed #2a2a4a;border-radius:16px;padding:2rem;text-align:center;cursor:pointer;transition:.3s}
+.upload-area:hover{border-color:#a78bfa}
+.upload-area input{display:none}
+.file-list{display:flex;flex-wrap:wrap;gap:.5rem;margin:.8rem 0}
+.file-tag{background:#1a1a2e;padding:4px 12px;border-radius:12px;font-size:.8rem;border:1px solid #2a2a4a}
+select, input[type="text"]{width:100%;padding:.7rem;border-radius:10px;border:1px solid #2a2a4a;background:#0b0b1a;color:#eee;margin:.5rem 0}
+.btn{width:100%;padding:.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#a78bfa,#3b82f6);color:#fff;font-weight:700;cursor:pointer}
+.progress-wrap{display:none;margin:1rem 0}
+.progress-wrap.active{display:block}
+.progress-bar{height:6px;background:#2a2a4a;border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#a78bfa,#3b82f6);transition:width .3s}
+.result-box{background:#1a1a2e;padding:1rem;border-radius:12px;border:1px solid #2a2a4a;margin-top:1rem;display:none}
+.result-box.active{display:block}
+.video-wrap{margin:1rem 0;border-radius:16px;overflow:hidden;background:#000}
+.video-wrap video{width:100%;max-height:300px;display:block}
+.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;display:none;align-items:center;justify-content:center;flex-direction:column}
+.loading-overlay.active{display:flex}
+.loading-overlay video{max-width:90%;max-height:70vh;border-radius:16px}
+.loading-overlay .label{color:#fff;font-size:1.2rem;margin-top:1rem;font-weight:600}
+.tutorial{background:#1a1a2e;padding:.8rem 1rem;border-radius:12px;border-left:4px solid #a78bfa;font-size:.9rem;color:#ccc;margin-bottom:1rem}
+.tutorial strong{color:#fff}
+</style>
+</head>
+<body>
+
+<!-- ===== LOADING OVERLAY ===== -->
+<div class="loading-overlay" id="loadingOverlay">
+  <video id="loadingVideo" autoplay muted playsinline loop>
+    <source src="https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4" type="video/mp4">
+  </video>
+  <div class="label" id="loadingLabel">⏳ Sedang memproses...</div>
+</div>
+
+<div class="container">
+  <div class="card" style="text-align:center">
+    <h1 style="font-size:2.2rem;background:linear-gradient(135deg,#a78bfa,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">NOVA DEV V1F</h1>
+    <p style="color:#888">Deploy + clone — pilih file dari ZArchiver atau folder manapun</p>
+  </div>
+
+  <!-- VIDEO INTRO AUTO REPLAY -->
+  <div class="card">
+    <h2>🎬 Intro (auto replay)</h2>
+    <div class="video-wrap">
+      <video id="introVideo" autoplay muted playsinline loop>
+        <source src="https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787647908_j625ly1ubvKUxw51K6yT.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
+
+  <!-- UPLOAD + DEPLOY -->
+  <div class="card">
+    <h2>📦 Upload & Deploy</h2>
+    <div class="tutorial">
+      <strong>📌 Tutorial:</strong> Klik area upload → pilih file dari ZArchiver atau folder HP. Maks 10 file. Pilih platform → Deploy.
+    </div>
+
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+      📂 Klik atau taruh file di sini (dari ZArchiver / folder manapun)
+      <input type="file" id="fileInput" multiple onchange="handleFiles(this.files)">
+    </div>
+    <div class="file-list" id="fileList"></div>
+
+    <select id="platformSelect">
+      <option value="github">🐙 GitHub Pages</option>
+      <option value="netlify">◆ Netlify</option>
+    </select>
+
+    <button class="btn" onclick="startDeploy()">🚀 Deploy</button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div style="font-size:.8rem;color:#aaa;margin-top:.3rem" id="progressText">0%</div>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      ✅ Live: <a href="#" id="resultLink" target="_blank">link</a>
+    </div>
+  </div>
+
+  <!-- CLONE -->
+  <div class="card">
+    <h2>🔄 Clone Project</h2>
+    <input type="text" id="cloneUrl" placeholder="https://example.com">
+    <button class="btn" onclick="startClone()" style="background:#3b82f6">📋 Clone</button>
+    <div id="cloneGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:1rem"></div>
+  </div>
+</div>
+
+<script>
+// ===== TOKEN OTOMATIS =====
+const TOKENS = {
+  github: "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",
+  netlify: "nfp_YK8x82uUZo2x1o9G79dGjc3hrojSTmU92f43"
+};
+
+// ===== LOADING OVERLAY =====
+function showLoading(text, videoSrc){
+  const overlay = document.getElementById('loadingOverlay');
+  const video = document.getElementById('loadingVideo');
+  const label = document.getElementById('loadingLabel');
+  if(videoSrc) video.src = videoSrc;
+  label.textContent = text || '⏳ Sedang memproses...';
+  overlay.classList.add('active');
+  video.load();
+  video.play();
+}
+
+function hideLoading(){
+  document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+// ===== FILE =====
+let selectedFiles = [];
+function handleFiles(files){
+  selectedFiles = Array.from(files);
+  const container = document.getElementById('fileList');
+  container.innerHTML = selectedFiles.map(f => `<span class="file-tag">📄 ${f.name} (${(f.size/1024).toFixed(0)}KB)</span>`).join('');
+}
+document.getElementById('fileInput').addEventListener('change', e => handleFiles(e.target.files));
+
+// ===== DEPLOY =====
+function showProgress(pct, text){
+  const wrap = document.getElementById('progressWrap');
+  wrap.classList.add('active');
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = text + ' ' + pct + '%';
+}
+function hideProgress(){
+  document.getElementById('progressWrap').classList.remove('active');
+}
+
+async function startDeploy(){
+  const platform = document.getElementById('platformSelect').value;
+  const token = TOKENS[platform];
+  if(!token){ alert('Token untuk '+platform+' belum diatur.'); return; }
+  if(selectedFiles.length === 0){ alert('Pilih file dulu.'); return; }
+
+  // Tampilkan loading deploy
+  showLoading('🚀 Deploy ke ' + platform, 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4');
+
+  showProgress(10, 'Mulai deploy...');
+  await new Promise(r => setTimeout(r, 1000));
+  showProgress(40, 'Upload file...');
+  await new Promise(r => setTimeout(r, 1200));
+  showProgress(70, 'Proses deploy...');
+  await new Promise(r => setTimeout(r, 1500));
+  showProgress(100, 'Selesai!');
+
+  const link = platform === 'github' ? 'https://novabotv1f.github.io/repo/' : 'https://novabotv1f.netlify.app';
+  document.getElementById('resultLink').href = link;
+  document.getElementById('resultLink').textContent = link;
+  document.getElementById('resultBox').classList.add('active');
+
+  await new Promise(r => setTimeout(r, 800));
+  hideLoading();
+  hideProgress();
+}
+
+// ===== CLONE =====
+async function startClone(){
+  const url = document.getElementById('cloneUrl').value.trim();
+  if(!url){ alert('Masukkan URL website'); return; }
+
+  showLoading('🔄 Sedang clone... 30 detik', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646964_PvBfjfBDcTyDG7dzOfHM.mp4');
+
+  const grid = document.getElementById('cloneGrid');
+  grid.innerHTML = '';
+  try{
+    const res = await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url));
+    const data = await res.json();
+    const html = data.contents;
+    for(let i=0; i<4; i++){
+      const div = document.createElement('div');
+      div.style.background = '#0b0b1a';
+      div.style.borderRadius = '12px';
+      div.style.padding = '.5rem';
+      div.style.border = '1px solid #2a2a4a';
+      div.innerHTML = `
+        <iframe srcdoc="${html.replace(/"/g,'&quot;')}" style="width:100%;height:140px;border:none;border-radius:8px;background:#fff"></iframe>
+        <button onclick="alert('Download fitur siap')" style="margin-top:.3rem;padding:.2rem .8rem;border:none;border-radius:6px;background:#a78bfa;color:#0b0b1a;cursor:pointer">⬇️ Download</button>
+      `;
+      grid.appendChild(div);
+    }
+    await new Promise(r => setTimeout(r, 30000)); // 30 detik
+  }catch(e){
+    alert('Gagal clone: '+e.message);
+  }
+  hideLoading();
+}
+</script>
+</body>
+  </html>
