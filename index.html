@@ -17,8 +17,10 @@ body{background:#0b0b1a;color:#eee;font-family:'Segoe UI',sans-serif;padding:1re
 .btn:hover{background:#8b5cf6}
 .loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:999}
 .loading-overlay.active{display:flex}
-.loading-overlay video{max-width:90%;max-height:70vh}
+.loading-overlay video{max-width:90%;max-height:70vh;border-radius:16px}
 .loading-overlay .label{color:#fff;margin-top:1rem}
+.clone-actions{display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
+.clone-actions .btn{width:auto;padding:.5rem 1rem}
 </style>
 </head>
 <body>
@@ -36,7 +38,7 @@ body{background:#0b0b1a;color:#eee;font-family:'Segoe UI',sans-serif;padding:1re
     <p style="color:#888">Upload → Deploy → Clone</p>
   </div>
 
-  <!-- Video Intro (auto play suara setelah klik pertama) -->
+  <!-- Video Intro (auto play dengan suara) -->
   <div class="card">
     <h2>🎬 Intro</h2>
     <div class="video-box">
@@ -115,6 +117,7 @@ function readFileAsBase64(file){
 
 // ===== DEPLOY KE GITHUB PAGES =====
 async function deployToGithub(files, token, repo){
+  const results = [];
   for(let f of files){
     const content = await readFileAsBase64(f);
     const res = await fetch(`https://api.github.com/repos/${repo}/contents/${f.name}`, {
@@ -122,27 +125,55 @@ async function deployToGithub(files, token, repo){
       headers: { 'Authorization': `token ${token}` },
       body: JSON.stringify({ message: 'Upload via NOVA', content })
     });
-    if(!res.ok) throw new Error('Gagal upload ' + f.name + ': ' + res.status);
+    if(!res.ok){
+      const err = await res.text();
+      throw new Error(`Gagal upload ${f.name}: ${res.status} ${err}`);
+    }
+    results.push(await res.json());
   }
+  // Trigger GitHub Pages rebuild (dengan push ke branch gh-pages)
+  try{
+    await fetch(`https://api.github.com/repos/${repo}/pages/builds`, {
+      method: 'POST',
+      headers: { 'Authorization': `token ${token}` }
+    });
+  } catch(e){ /* Pages mungkin sudah aktif */ }
   return `https://${repo.split('/')[0]}.github.io/${repo.split('/')[1]}/`;
 }
 
 // ===== DEPLOY KE NETLIFY =====
 async function deployToNetlify(files, token){
+  // Buat site baru
   const site = await fetch('https://api.netlify.com/api/v1/sites', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({ name: 'nova-deploy-' + Date.now() })
-  }).then(r => r.json());
+    body: JSON.stringify({ 
+      name: 'nova-deploy-' + Date.now(),
+      force_ssl: true
+    })
+  }).then(r => {
+    if(!r.ok) throw new Error('Gagal bikin site Netlify');
+    return r.json();
+  });
   
+  // Upload file satu per satu
   for(let f of files){
     const content = await readFileAsBase64(f);
-    await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/files/${f.name}`, {
+    const res = await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/files/${f.name}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ content })
     });
+    if(!res.ok) throw new Error('Gagal upload ' + f.name);
   }
+  
+  // Trigger deploy
+  await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/deploys`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({})
+  });
+  
   return site.ssl_url || site.url;
 }
 
@@ -151,9 +182,11 @@ async function startDeploy(){
   if(selectedFiles.length === 0){ alert('Pilih file dulu!'); return; }
   const platform = document.getElementById('platformSelect').value;
   const token = TOKENS[platform];
-  if(!token){ alert('Token '+platform+' belum diisi'); return; }
+  if(!token){ alert('Token '+platform+' belum diisi. Bikin token dulu di GitHub/Netlify.'); return; }
 
-  showLoading('🚀 Deploy ke ' + platform + '...');
+  showLoading(`🚀 Deploy ke ${platform}... 30 detik`);
+  await new Promise(r => setTimeout(r, 30000)); // jeda 30 detik
+
   try{
     let link;
     if(platform === 'github'){
@@ -165,29 +198,33 @@ async function startDeploy(){
     document.getElementById('resultLink').href = link;
     document.getElementById('resultLink').textContent = link;
     document.getElementById('resultBox').style.display = 'block';
-    alert('✅ Deploy berhasil! Link: ' + link);
+    hideLoading();
+    alert(`✅ Deploy berhasil!\nLink: ${link}`);
   } catch(e){
-    alert('❌ Error: ' + e.message);
+    hideLoading();
+    alert(`❌ Error: ${e.message}`);
   }
-  hideLoading();
 }
 
-// ===== CLONE WEBSITE (DENGAN JEDA 30 DETIK) =====
+// ===== CLONE WEBSITE =====
 async function startClone(){
   const url = document.getElementById('cloneUrl').value.trim();
   if(!url){ alert('Masukkan URL website'); return; }
   
-  showLoading('🔄 Clone... tunggu 30 detik');
+  showLoading('🔄 Clone... 30 detik');
+  await new Promise(r => setTimeout(r, 30000)); // jeda 30 detik
+
   try{
-    // Jeda 30 detik sebelum clone dimulai
-    await new Promise(r => setTimeout(r, 30000));
-    
     const res = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url));
+    if(!res.ok) throw new Error('Gagal fetch website');
     const html = await res.text();
     document.getElementById('cloneGrid').innerHTML = `
       <h3 style="color:#a78bfa">Hasil Clone</h3>
       <pre style="background:#0b0b1a;padding:1rem;border-radius:12px;max-height:300px;overflow:auto;font-size:.8rem">${html.replace(/</g,'&lt;')}</pre>
-      <button onclick="downloadHTML('${encodeURIComponent(html)}')" class="btn" style="margin-top:.5rem">⬇️ Download HTML</button>
+      <div class="clone-actions">
+        <button onclick="downloadHTML('${encodeURIComponent(html)}')" class="btn" style="background:#a78bfa">⬇️ Download</button>
+        <button onclick="publishClone('${encodeURIComponent(html)}')" class="btn" style="background:#10b981">🌐 Jadi Website</button>
+      </div>
     `;
   } catch(e){
     alert('Gagal clone: ' + e.message);
@@ -201,6 +238,14 @@ function downloadHTML(encoded){
   a.download = 'clone.html';
   a.click();
 }
+
+function publishClone(encoded){
+  const html = decodeURIComponent(encoded);
+  const win = window.open();
+  win.document.write(html);
+  win.document.close();
+  alert('✅ Website clone terbuka di tab baru!');
+}
 </script>
 </body>
-      </html>
+  </html>
