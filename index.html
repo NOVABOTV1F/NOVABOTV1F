@@ -145,12 +145,15 @@ document.getElementById('introBtn').addEventListener('click',startIntro);
 intro.addEventListener('click',(e)=>{if(e.target===intro)startIntro()});
 
 // ===== LOADING OVERLAY =====
-function showLoading(text){
-  document.getElementById('loadingVid').classList.add('on');
-  document.getElementById('loadingLabel').textContent = text || '⏳ Sedang memproses...';
-  const vid = document.getElementById('loadingVideo');
-  vid.muted = false;
-  vid.play().catch(()=>{});
+function showLoading(text, videoSrc){
+  const overlay = document.getElementById('loadingVid');
+  const video = document.getElementById('loadingVideo');
+  const label = document.getElementById('loadingLabel');
+  if(videoSrc) video.src = videoSrc;
+  label.textContent = text || '⏳ Sedang memproses...';
+  overlay.classList.add('on');
+  video.muted = false;
+  video.play().catch(()=>{});
 }
 function hideLoading(){
   document.getElementById('loadingVid').classList.remove('on');
@@ -185,8 +188,8 @@ async function deploy(){
   if(!token){toast('Token untuk '+plat+' tidak ditemukan di config.js');return}
   if(files.length===0){toast('Pilih file dulu!');return}
 
-  // Tampilkan loading video
-  showLoading('🚀 Deploy ke ' + plat + '... 30 detik');
+  // Tampilkan loading deploy (video 3)
+  showLoading('🚀 Deploy ke ' + plat + '... 30 detik', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4');
 
   const btn=document.getElementById('depBtn');
   const wrap=document.getElementById('progWrap');
@@ -218,8 +221,8 @@ async function cloneSite(){
   if(!url){toast('Masukkan URL');return}
   const btn=event.target;btn.disabled=true;btn.textContent='⏳ Cloning... 30 detik';
 
-  // Tampilkan loading video
-  showLoading('🔄 Clone website... 30 detik');
+  // Tampilkan loading clone (video 2)
+  showLoading('🔄 Clone website... 30 detik', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646964_PvBfjfBDcTyDG7dzOfHM.mp4');
 
   // Jeda 30 detik
   await new Promise(r=>setTimeout(r,30000));
