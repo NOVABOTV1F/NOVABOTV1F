@@ -36,11 +36,11 @@ body{background:#0b0b1a;color:#eee;font-family:'Segoe UI',sans-serif;padding:1re
     <p style="color:#888">Upload → Deploy → Clone</p>
   </div>
 
-  <!-- Video Intro -->
+  <!-- Video Intro (auto play suara setelah klik pertama) -->
   <div class="card">
     <h2>🎬 Intro</h2>
     <div class="video-box">
-      <video id="introVideo" controls playsinline>
+      <video id="introVideo" muted playsinline>
         <source src="https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787647908_j625ly1ubvKUxw51K6yT.mp4" type="video/mp4">
       </video>
     </div>
@@ -74,7 +74,16 @@ body{background:#0b0b1a;color:#eee;font-family:'Segoe UI',sans-serif;padding:1re
 </div>
 
 <script>
-// ===== TOKEN (DIISI SENDIRI) =====
+// ===== AUTO PLAY SUARA SETELAH KLIK PERTAMA =====
+document.addEventListener('click', function(){
+  const video = document.getElementById('introVideo');
+  if(video){
+    video.muted = false;
+    video.play();
+  }
+}, { once: true });
+
+// ===== TOKEN (ISI SENDIRI) =====
 const TOKENS = { 
   github: "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",
   netlify: "nfp_YK8x82uUZo2x1o9G79dGjc3hrojSTmU92f43"
@@ -104,7 +113,7 @@ function readFileAsBase64(file){
   });
 }
 
-// ===== DEPLOY KE GITHUB PAGES (BENERAN) =====
+// ===== DEPLOY KE GITHUB PAGES =====
 async function deployToGithub(files, token, repo){
   for(let f of files){
     const content = await readFileAsBase64(f);
@@ -113,12 +122,12 @@ async function deployToGithub(files, token, repo){
       headers: { 'Authorization': `token ${token}` },
       body: JSON.stringify({ message: 'Upload via NOVA', content })
     });
-    if(!res.ok) throw new Error('Gagal upload ' + f.name);
+    if(!res.ok) throw new Error('Gagal upload ' + f.name + ': ' + res.status);
   }
   return `https://${repo.split('/')[0]}.github.io/${repo.split('/')[1]}/`;
 }
 
-// ===== DEPLOY KE NETLIFY (BENERAN) =====
+// ===== DEPLOY KE NETLIFY =====
 async function deployToNetlify(files, token){
   const site = await fetch('https://api.netlify.com/api/v1/sites', {
     method: 'POST',
@@ -156,18 +165,23 @@ async function startDeploy(){
     document.getElementById('resultLink').href = link;
     document.getElementById('resultLink').textContent = link;
     document.getElementById('resultBox').style.display = 'block';
+    alert('✅ Deploy berhasil! Link: ' + link);
   } catch(e){
-    alert('Error: ' + e.message);
+    alert('❌ Error: ' + e.message);
   }
   hideLoading();
 }
 
-// ===== CLONE WEBSITE (COPY HTML) =====
+// ===== CLONE WEBSITE (DENGAN JEDA 30 DETIK) =====
 async function startClone(){
   const url = document.getElementById('cloneUrl').value.trim();
   if(!url){ alert('Masukkan URL website'); return; }
-  showLoading('🔄 Clone...');
+  
+  showLoading('🔄 Clone... tunggu 30 detik');
   try{
+    // Jeda 30 detik sebelum clone dimulai
+    await new Promise(r => setTimeout(r, 30000));
+    
     const res = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url));
     const html = await res.text();
     document.getElementById('cloneGrid').innerHTML = `
@@ -189,4 +203,4 @@ function downloadHTML(encoded){
 }
 </script>
 </body>
-</html>
+      </html>
