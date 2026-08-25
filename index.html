@@ -34,12 +34,24 @@ input,select{width:100%;padding:.8rem;border-radius:14px;background:rgba(0,0,0,.
 .intro-content{position:relative;z-index:10;text-align:center;padding:2rem}
 .intro-content h1{font-size:clamp(2.2rem,7vw,4rem);background:linear-gradient(135deg,#fff,#c4b5fd,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .intro-click{padding:1rem 2.5rem;background:linear-gradient(135deg,#8b5cf6,#3b82f6);border:none;border-radius:18px;color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;margin-top:1rem}
+.loading-vid{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:9998}
+.loading-vid.on{display:flex}
+.loading-vid video{max-width:90%;max-height:70vh;border-radius:16px}
+.loading-vid .lbl{color:#fff;margin-top:1rem;font-size:1.1rem}
 </style>
 </head>
 <body>
 
 <!-- TOAST -->
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- LOADING OVERLAY (untuk deploy & clone) -->
+<div class="loading-vid" id="loadingVid">
+  <video id="loadingVideo" loop playsinline muted>
+    <source src="https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4" type="video/mp4">
+  </video>
+  <div class="lbl" id="loadingLabel">⏳ Sedang memproses...</div>
+</div>
 
 <!-- INTRO -->
 <div class="intro-overlay" id="intro">
@@ -68,7 +80,7 @@ input,select{width:100%;padding:.8rem;border-radius:14px;background:rgba(0,0,0,.
       <option value="vercel">Vercel</option>
       <option value="netlify">Netlify</option>
     </select>
-    <input type="text" id="siteName" placeholder="Nama website / repo">
+    <input type="text" id="siteName" placeholder="Nama website (contoh: my-site)">
     <div class="upload-area" onclick="document.getElementById('fileIn').click()">
       📂 Klik pilih file (1–10 file)
       <input type="file" id="fileIn" multiple style="display:none">
@@ -132,6 +144,19 @@ function startIntro(){
 document.getElementById('introBtn').addEventListener('click',startIntro);
 intro.addEventListener('click',(e)=>{if(e.target===intro)startIntro()});
 
+// ===== LOADING OVERLAY =====
+function showLoading(text){
+  document.getElementById('loadingVid').classList.add('on');
+  document.getElementById('loadingLabel').textContent = text || '⏳ Sedang memproses...';
+  const vid = document.getElementById('loadingVideo');
+  vid.muted = false;
+  vid.play().catch(()=>{});
+}
+function hideLoading(){
+  document.getElementById('loadingVid').classList.remove('on');
+  document.getElementById('loadingVideo').pause();
+}
+
 // ===== TOKEN DARI CONFIG.JS =====
 function getToken(platform){
   if(typeof TOKENS !== 'undefined' && TOKENS[platform]){
@@ -160,34 +185,42 @@ async function deploy(){
   if(!token){toast('Token untuk '+plat+' tidak ditemukan di config.js');return}
   if(files.length===0){toast('Pilih file dulu!');return}
 
+  // Tampilkan loading video
+  showLoading('🚀 Deploy ke ' + plat + '... 30 detik');
+
   const btn=document.getElementById('depBtn');
   const wrap=document.getElementById('progWrap');
   const fill=document.getElementById('progFill');
   const text=document.getElementById('progText');
   btn.disabled=true;wrap.classList.add('on');
 
-  // Simulasi progress 30 detik
+  // Progress 30 detik
   for(let p=0;p<=100;p+=10){
     fill.style.width=p+'%';
     text.textContent=p+'%';
     await new Promise(r=>setTimeout(r,300));
   }
 
+  // Hasil deploy (simulasi, tapi link real)
   const link={github:`https://${name}.github.io`,vercel:`https://${name}.vercel.app`,netlify:`https://${name}.netlify.app`}[plat];
   document.getElementById('resLink').value=link;
   document.getElementById('resBox').classList.add('on');
   btn.disabled=false;wrap.classList.remove('on');
+  hideLoading();
   toast('✅ Deploy berhasil!');
 }
 function copyRes(){navigator.clipboard.writeText(document.getElementById('resLink').value);toast('Link tersalin')}
 function openRes(){window.open(document.getElementById('resLink').value,'_blank')}
 
-// ===== CLONE (30 detik jeda) =====
+// ===== CLONE (30 detik jeda + video) =====
 async function cloneSite(){
   const url=document.getElementById('cloneUrl').value.trim();
   if(!url){toast('Masukkan URL');return}
   const btn=event.target;btn.disabled=true;btn.textContent='⏳ Cloning... 30 detik';
-  
+
+  // Tampilkan loading video
+  showLoading('🔄 Clone website... 30 detik');
+
   // Jeda 30 detik
   await new Promise(r=>setTimeout(r,30000));
 
@@ -202,6 +235,7 @@ async function cloneSite(){
     toast('✅ Clone berhasil');
   }catch(e){toast('❌ Gagal clone: '+e.message)}
   btn.disabled=false;btn.textContent='📋 Clone';
+  hideLoading();
 }
 function downloadClone(e){const a=document.createElement('a');a.href='data:text/html;charset=utf-8,'+e;a.download='clone.html';a.click()}
 function previewClone(e){const w=window.open('');w.document.write(decodeURIComponent(e));w.document.close()}
