@@ -116,7 +116,7 @@ input,select{width:100%;padding:.8rem;border-radius:14px;background:rgba(0,0,0,.
 
 <script src="config.js"></script>
 <script>
-// ===== INTRO — KLIK DI MANA AJA UNTUK MUTEK MUSIK =====
+// ===== INTRO =====
 document.addEventListener('click', function(){
   const v = document.getElementById('introVid');
   if(v && v.muted) {
@@ -125,7 +125,6 @@ document.addEventListener('click', function(){
   }
 }, { once: true });
 
-// ===== INTRO OVERLAY =====
 let introStarted=false;
 const intro=document.getElementById('intro');
 const introVid=document.getElementById('introVid');
@@ -145,7 +144,7 @@ function startIntro(){
 document.getElementById('introBtn').addEventListener('click',startIntro);
 intro.addEventListener('click',(e)=>{if(e.target===intro)startIntro()});
 
-// ===== LOADING OVERLAY =====
+// ===== LOADING =====
 function showLoading(text, videoSrc){
   const overlay = document.getElementById('loadingVid');
   const video = document.getElementById('loadingVideo');
@@ -181,7 +180,7 @@ function renderFiles(){
   document.getElementById('fileTags').innerHTML=files.map((f,i)=>`<span class="file-tag">📄 ${f.name}<span onclick="files.splice(${i},1);renderFiles()" style="cursor:pointer;margin-left:4px;color:#ef4444">×</span></span>`).join('');
 }
 
-// ===== DEPLOY (REAL) =====
+// ===== DEPLOY =====
 async function deploy(){
   const plat=document.getElementById('platSel').value;
   const token=getToken(plat);
@@ -190,7 +189,6 @@ async function deploy(){
   if(!token){toast('Token untuk '+plat+' tidak ditemukan di config.js');return}
   if(files.length===0){toast('Pilih file dulu!');return}
 
-  // Tampilkan loading deploy
   showLoading('🚀 Deploy ke ' + plat + '... 31 detik', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4');
 
   const btn=document.getElementById('depBtn');
@@ -202,15 +200,17 @@ async function deploy(){
   // Jeda 31 detik
   await new Promise(r=>setTimeout(r,31000));
 
-  // Progress
   for(let p=0;p<=100;p+=10){
     fill.style.width=p+'%';
     text.textContent=p+'%';
     await new Promise(r=>setTimeout(r,300));
   }
 
-  // Link bener: https://user.github.io/repo
-  const link={github:`https://${user}.github.io/${repo}/`,vercel:`https://${repo}.vercel.app`,netlify:`https://${repo}.netlify.app`}[plat];
+  // Link BENAR: https://username.github.io/repo/
+  const link = plat === 'github' ? `https://${user}.github.io/${repo}/` :
+               plat === 'vercel' ? `https://${repo}.vercel.app` :
+               `https://${repo}.netlify.app`;
+
   document.getElementById('resLink').value=link;
   document.getElementById('resBox').classList.add('on');
   btn.disabled=false;wrap.classList.remove('on');
@@ -220,7 +220,7 @@ async function deploy(){
 function copyRes(){navigator.clipboard.writeText(document.getElementById('resLink').value);toast('Link tersalin')}
 function openRes(){window.open(document.getElementById('resLink').value,'_blank')}
 
-// ===== CLONE (31 detik jeda) =====
+// ===== CLONE =====
 async function cloneSite(){
   const url=document.getElementById('cloneUrl').value.trim();
   if(!url){toast('Masukkan URL');return}
@@ -228,7 +228,6 @@ async function cloneSite(){
 
   showLoading('🔄 Clone website... 31 detik', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646964_PvBfjfBDcTyDG7dzOfHM.mp4');
 
-  // Jeda 31 detik
   await new Promise(r=>setTimeout(r,31000));
 
   try{
@@ -247,7 +246,6 @@ async function cloneSite(){
 function downloadClone(e){const a=document.createElement('a');a.href='data:text/html;charset=utf-8,'+e;a.download='clone.html';a.click()}
 function previewClone(e){const w=window.open('');w.document.write(decodeURIComponent(e));w.document.close()}
 
-// ===== TOAST =====
 function toast(msg){
   const el=document.createElement('div');
   el.className='toast';
@@ -257,4 +255,4 @@ function toast(msg){
 }
 </script>
 </body>
-        </html>
+  </html>
