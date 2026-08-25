@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOVA DEV V1F</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="config.js"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:sans-serif;background:#050510;color:#e2e8f0;min-height:100vh}
@@ -15,8 +14,12 @@
         .upload-zone:hover{border-color:#8b5cf6;background:rgba(139,92,246,.06)}
         .file-item{display:flex;justify-content:space-between;padding:.5rem;background:rgba(0,0,0,.3);border-radius:12px;margin:.3rem 0}
         input,select{width:100%;padding:.8rem;border-radius:14px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.06)}
+        label{font-size:.85rem;color:#94a3b8;display:block;margin-bottom:.3rem}
+        .field{margin:.7rem 0}
+        .hint{font-size:.72rem;color:#64748b;margin-top:.3rem}
         .btn{width:100%;padding:.9rem;border:none;border-radius:18px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#fff;font-weight:700;cursor:pointer}
         .btn:hover{transform:translateY(-2px)}
+        .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
         .video-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:1rem}
         .video-overlay.active{display:flex}
         .video-overlay video{max-width:90%;max-height:60vh;border-radius:16px;margin-bottom:1rem}
@@ -26,6 +29,7 @@
         .platform-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
         .platform-btn{padding:.8rem;border:2px solid rgba(255,255,255,.1);border-radius:16px;background:transparent;color:#fff;cursor:pointer}
         .platform-btn.active{border-color:#8b5cf6;background:rgba(139,92,246,.1)}
+        .platform-btn:disabled{opacity:.4;cursor:not-allowed}
         .link-box{display:flex;gap:.5rem;margin-top:1rem}
         .link-box input{flex:1}
         .history-item{display:flex;justify-content:space-between;padding:.5rem;background:rgba(0,0,0,.2);border-radius:10px;margin:.2rem 0}
@@ -39,6 +43,7 @@
         .intro-content{position:relative;z-index:10;text-align:center;padding:2rem}
         .intro-content h1{font-size:clamp(2.2rem,7vw,4rem);background:linear-gradient(135deg,#fff,#c4b5fd,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
         .intro-click{padding:1rem 2.5rem;background:linear-gradient(135deg,#8b5cf6,#3b82f6);border:none;border-radius:18px;color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;margin-top:1rem}
+        .warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:14px;padding:.7rem;font-size:.75rem;color:#fbbf24;margin-bottom:.7rem}
     </style>
 </head>
 <body>
@@ -87,13 +92,31 @@
     <!-- DEPLOY -->
     <div class="card">
         <h2>📦 Upload & Deploy</h2>
+        <div class="warn">🔒 Token disimpan hanya di browser kamu (opsional, lokal), <b>tidak pernah ikut ter-upload ke repo</b>. Jangan pernah taruh token di dalam file yang kamu deploy.</div>
+
         <div class="platform-grid">
             <button class="platform-btn active" data-platform="github" onclick="selectPlatform('github')">🐙 GitHub</button>
             <button class="platform-btn" data-platform="netlify" onclick="selectPlatform('netlify')">◆ Netlify</button>
-            <button class="platform-btn disabled" data-platform="vercel" onclick="selectPlatform('vercel')" disabled>▲ Vercel</button>
+            <button class="platform-btn" data-platform="vercel" onclick="selectPlatform('vercel')" disabled>▲ Vercel</button>
         </div>
-        <div style="margin:.5rem 0">
-            <label>🔗 Nama Website</label>
+
+        <div class="field" id="githubTokenField">
+            <label>🔑 GitHub Personal Access Token</label>
+            <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxx">
+            <div class="hint">Settings → Developer settings → Personal access tokens (classic) → scope: repo</div>
+        </div>
+        <div class="field" id="netlifyTokenField" style="display:none">
+            <label>🔑 Netlify Personal Access Token</label>
+            <input type="password" id="netlifyToken" placeholder="nfp_xxxxxxxxxxxxxxxx">
+            <div class="hint">User settings → Applications → New access token</div>
+        </div>
+        <div class="field" style="display:flex;align-items:center;gap:.5rem">
+            <input type="checkbox" id="saveToken" style="width:auto">
+            <label style="margin:0" for="saveToken">Ingat token di HP ini (tidak disarankan di HP bersama)</label>
+        </div>
+
+        <div class="field">
+            <label>🔗 Nama Website / Repo</label>
             <input type="text" id="siteName" placeholder="contoh: toko-saya">
         </div>
         <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
@@ -146,13 +169,32 @@ document.getElementById('introBtn').addEventListener('click', function(){
 // ===== STATE =====
 let selectedPlatform = 'github';
 let files = [];
-const GITHUB_USERNAME = 'novabotv1f';
+
+// ===== TOKEN (lokal saja, tidak pernah dikirim ke repo) =====
+function loadSavedTokens(){
+    document.getElementById('githubToken').value = localStorage.getItem('nova_gh_token') || '';
+    document.getElementById('netlifyToken').value = localStorage.getItem('nova_nf_token') || '';
+    document.getElementById('saveToken').checked = localStorage.getItem('nova_save_token') === '1';
+}
+function persistTokensIfWanted(){
+    const save = document.getElementById('saveToken').checked;
+    localStorage.setItem('nova_save_token', save ? '1' : '0');
+    if(save){
+        localStorage.setItem('nova_gh_token', document.getElementById('githubToken').value.trim());
+        localStorage.setItem('nova_nf_token', document.getElementById('netlifyToken').value.trim());
+    } else {
+        localStorage.removeItem('nova_gh_token');
+        localStorage.removeItem('nova_nf_token');
+    }
+}
 
 // ===== PLATFORM =====
 function selectPlatform(p){
     if(p==='vercel') return;
     selectedPlatform = p;
     document.querySelectorAll('.platform-btn').forEach(b=>b.classList.toggle('active', b.dataset.platform===p));
+    document.getElementById('githubTokenField').style.display = p==='github' ? 'block' : 'none';
+    document.getElementById('netlifyTokenField').style.display = p==='netlify' ? 'block' : 'none';
 }
 
 // ===== FILE =====
@@ -171,8 +213,8 @@ function renderFiles(){
     `).join('');
 }
 
-// ===== VIDEO LOADING =====
-function showVideo(text, videoSrc){
+// ===== VIDEO LOADING / JEDA =====
+function showVideo(text, videoSrc, seconds){
     return new Promise(resolve=>{
         const ov=document.getElementById('videoOverlay');
         const cd=document.getElementById('countdown');
@@ -181,7 +223,7 @@ function showVideo(text, videoSrc){
         if(videoSrc) vid.src = videoSrc;
         ov.classList.add('active');
         st.textContent = text || 'Sedang memproses...';
-        let s=31;
+        let s = seconds || 31;
         cd.textContent=s;
         const iv=setInterval(()=>{
             s--; cd.textContent=s;
@@ -189,78 +231,138 @@ function showVideo(text, videoSrc){
         },1000);
     });
 }
+function updateVideoStatus(text){
+    document.getElementById('videoStatus').textContent = text;
+}
 
-// ===== DEPLOY =====
-async function deployGitHub(name, files){
-    const token = TOKENS.github;
+// ===== DEPLOY: GITHUB =====
+async function ghFetch(url, token, opts={}){
+    const res = await fetch(url, {
+        ...opts,
+        headers:{ 'Authorization':`token ${token}`, 'Content-Type':'application/json', ...(opts.headers||{}) }
+    });
+    return res;
+}
+
+async function deployGitHub(name, files, token){
+    if(!token) throw new Error('Token GitHub belum diisi');
+
+    // Ambil username asli dari token (bukan hardcode)
+    const meRes = await ghFetch('https://api.github.com/user', token);
+    if(!meRes.ok) throw new Error('Token GitHub tidak valid / gagal auth');
+    const me = await meRes.json();
+    const owner = me.login;
+
     const repo = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-    const owner = GITHUB_USERNAME;
-    let res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {headers:{'Authorization':`token ${token}`}});
+    if(!repo) throw new Error('Nama website tidak valid');
+
+    let res = await ghFetch(`https://api.github.com/repos/${owner}/${repo}`, token);
     if(res.status===404){
-        await fetch('https://api.github.com/user/repos', {
+        const createRes = await ghFetch('https://api.github.com/user/repos', token, {
             method:'POST',
-            headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
             body:JSON.stringify({name:repo,private:false,auto_init:true})
         });
+        if(!createRes.ok){
+            const err = await createRes.json().catch(()=>({}));
+            throw new Error('Gagal buat repo: '+(err.message||createRes.status));
+        }
         await new Promise(r=>setTimeout(r,1500));
+    } else if(!res.ok){
+        throw new Error('Gagal cek repo (cek token/scope repo)');
     }
+
     for(const f of files){
         const buf = await f.arrayBuffer();
         const content = btoa(String.fromCharCode(...new Uint8Array(buf)));
         const path = f.name;
         let sha=null;
-        const chk = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {headers:{'Authorization':`token ${token}`}});
+        const chk = await ghFetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, token);
         if(chk.ok){const d=await chk.json(); sha=d.sha}
-        await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
+        const put = await ghFetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, token, {
             method:'PUT',
-            headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
             body:JSON.stringify({message:`Add ${path}`,content,sha, branch:'main'})
         });
+        if(!put.ok){
+            const err = await put.json().catch(()=>({}));
+            throw new Error(`Gagal upload ${path}: `+(err.message||put.status));
+        }
         await new Promise(r=>setTimeout(r,300));
     }
-    await fetch(`https://api.github.com/repos/${owner}/${repo}/pages`, {
+
+    // Aktifkan GitHub Pages (boleh gagal kalau sudah aktif sebelumnya, itu wajar)
+    await ghFetch(`https://api.github.com/repos/${owner}/${repo}/pages`, token, {
         method:'POST',
-        headers:{'Authorization':`token ${token}`,'Content-Type':'application/json'},
         body:JSON.stringify({source:{branch:'main',path:'/'}})
     });
+
+    // Jeda tambahan: Pages butuh waktu build sebelum link benar-benar aktif
+    updateVideoStatus('Menunggu GitHub Pages build...');
+    await new Promise(r=>setTimeout(r,8000));
+
     return `https://${owner}.github.io/${repo}/`;
 }
 
-async function deployNetlify(name, files){
-    const token = TOKENS.netlify;
-    const site = await fetch('https://api.netlify.com/api/v1/sites', {
+// ===== DEPLOY: NETLIFY =====
+async function deployNetlify(name, files, token){
+    if(!token) throw new Error('Token Netlify belum diisi');
+    const siteRes = await fetch('https://api.netlify.com/api/v1/sites', {
         method:'POST',
         headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
         body:JSON.stringify({name:name.toLowerCase().replace(/\s+/g,'-')})
-    }).then(r=>r.json());
+    });
+    if(!siteRes.ok) throw new Error('Gagal buat site Netlify (cek token)');
+    const site = await siteRes.json();
+
     const zip = new JSZip();
     for(const f of files){
         const buf = await f.arrayBuffer();
         zip.file(f.name, buf);
     }
     const zipBlob = await zip.generateAsync({type:'blob'});
-    await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/deploys`, {
+    const deployRes = await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/deploys`, {
         method:'POST',
         headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/zip'},
         body:zipBlob
     });
+    if(!deployRes.ok) throw new Error('Gagal upload file ke Netlify');
+
+    updateVideoStatus('Menunggu Netlify build...');
+    await new Promise(r=>setTimeout(r,4000));
+
     return site.ssl_url || site.url || `https://${site.subdomain}.netlify.app/`;
 }
 
+// ===== TRIGGER DEPLOY =====
 async function startDeploy(){
     const name = document.getElementById('siteName').value.trim();
     if(!name){alert('Masukkan nama website!');return}
     if(files.length===0){alert('Pilih file!');return}
-    if(selectedPlatform==='vercel'){alert('Vercel token kosong');return}
+    if(selectedPlatform==='vercel'){alert('Vercel belum tersedia');return}
+
+    const ghToken = document.getElementById('githubToken').value.trim();
+    const nfToken = document.getElementById('netlifyToken').value.trim();
+    if(selectedPlatform==='github' && !ghToken){alert('Isi token GitHub dulu!');return}
+    if(selectedPlatform==='netlify' && !nfToken){alert('Isi token Netlify dulu!');return}
+
+    persistTokensIfWanted();
+
     document.getElementById('deployBtn').disabled=true;
     try{
-        const deploy = selectedPlatform==='github' ? deployGitHub(name, files) : deployNetlify(name, files);
-        await showVideo(`Deploy ke ${selectedPlatform}...`, 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4');
-        const url = await deploy;
+        const deployPromise = selectedPlatform==='github'
+            ? deployGitHub(name, files, ghToken)
+            : deployNetlify(name, files, nfToken);
+
+        const videoP = showVideo(`Deploy ke ${selectedPlatform}...`, 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4', 31);
+
+        const [url] = await Promise.all([deployPromise, videoP]);
+
         document.getElementById('linkInput').value = url;
         document.getElementById('modal').classList.add('active');
         addHistory(url);
-    }catch(e){alert('Error: '+e.message)}
+    }catch(e){
+        document.getElementById('videoOverlay').classList.remove('active');
+        alert('Error: '+e.message);
+    }
     document.getElementById('deployBtn').disabled=false;
 }
 
@@ -270,7 +372,7 @@ async function startClone(){
     if(!url){alert('Masukkan URL website!');return}
     const btn = event.target;
     btn.disabled=true; btn.textContent='⏳ Cloning... 31 detik';
-    await showVideo('Clone website...', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646964_PvBfjfBDcTyDG7dzOfHM.mp4');
+    await showVideo('Clone website...', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646964_PvBfjfBDcTyDG7dzOfHM.mp4', 31);
     try{
         const res=await fetch('https://corsproxy.io/?'+encodeURIComponent(url));
         const html=await res.text();
@@ -322,7 +424,8 @@ function deleteHistory(i){
     loadHistory();
 }
 loadHistory();
+loadSavedTokens();
 document.getElementById('modal').addEventListener('click', e=>{if(e.target===e.currentTarget) closeModal()});
 </script>
 </body>
-  </html>
+</html>
