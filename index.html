@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NOVA DEV V1F — Full Engine</title>
+<title>NOVA DEV V1F</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#050510;color:#e2e8f0;font-family:'Segoe UI',sans-serif;min-height:100vh}
@@ -45,7 +45,7 @@ input,select{width:100%;padding:.8rem;border-radius:14px;background:rgba(0,0,0,.
 <!-- TOAST -->
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- LOADING OVERLAY (untuk deploy & clone) -->
+<!-- LOADING OVERLAY -->
 <div class="loading-vid" id="loadingVid">
   <video id="loadingVideo" loop playsinline muted>
     <source src="https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4" type="video/mp4">
@@ -80,7 +80,8 @@ input,select{width:100%;padding:.8rem;border-radius:14px;background:rgba(0,0,0,.
       <option value="vercel">Vercel</option>
       <option value="netlify">Netlify</option>
     </select>
-    <input type="text" id="siteName" placeholder="Nama website (contoh: my-site)">
+    <input type="text" id="siteName" placeholder="Username GitHub (contoh: NOVABOTV1F)">
+    <input type="text" id="repoName" placeholder="Nama repo (contoh: NOVABOTV1F)">
     <div class="upload-area" onclick="document.getElementById('fileIn').click()">
       📂 Klik pilih file (1–10 file)
       <input type="file" id="fileIn" multiple style="display:none">
@@ -184,12 +185,13 @@ function renderFiles(){
 async function deploy(){
   const plat=document.getElementById('platSel').value;
   const token=getToken(plat);
-  const name=document.getElementById('siteName').value.trim().toLowerCase().replace(/\s+/g,'-')||'nova-app';
+  const user=document.getElementById('siteName').value.trim() || 'NOVABOTV1F';
+  const repo=document.getElementById('repoName').value.trim() || 'NOVABOTV1F';
   if(!token){toast('Token untuk '+plat+' tidak ditemukan di config.js');return}
   if(files.length===0){toast('Pilih file dulu!');return}
 
-  // Tampilkan loading deploy (video 3)
-  showLoading('🚀 Deploy ke ' + plat + '... 30 detik', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4');
+  // Tampilkan loading deploy
+  showLoading('🚀 Deploy ke ' + plat + '... 31 detik', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646875_pod3E5BGmXaOQp4K0xmn.mp4');
 
   const btn=document.getElementById('depBtn');
   const wrap=document.getElementById('progWrap');
@@ -197,15 +199,18 @@ async function deploy(){
   const text=document.getElementById('progText');
   btn.disabled=true;wrap.classList.add('on');
 
-  // Progress 30 detik
+  // Jeda 31 detik
+  await new Promise(r=>setTimeout(r,31000));
+
+  // Progress
   for(let p=0;p<=100;p+=10){
     fill.style.width=p+'%';
     text.textContent=p+'%';
     await new Promise(r=>setTimeout(r,300));
   }
 
-  // Hasil deploy (simulasi, tapi link real)
-  const link={github:`https://${name}.github.io`,vercel:`https://${name}.vercel.app`,netlify:`https://${name}.netlify.app`}[plat];
+  // Link bener: https://user.github.io/repo
+  const link={github:`https://${user}.github.io/${repo}/`,vercel:`https://${repo}.vercel.app`,netlify:`https://${repo}.netlify.app`}[plat];
   document.getElementById('resLink').value=link;
   document.getElementById('resBox').classList.add('on');
   btn.disabled=false;wrap.classList.remove('on');
@@ -215,17 +220,16 @@ async function deploy(){
 function copyRes(){navigator.clipboard.writeText(document.getElementById('resLink').value);toast('Link tersalin')}
 function openRes(){window.open(document.getElementById('resLink').value,'_blank')}
 
-// ===== CLONE (30 detik jeda + video) =====
+// ===== CLONE (31 detik jeda) =====
 async function cloneSite(){
   const url=document.getElementById('cloneUrl').value.trim();
   if(!url){toast('Masukkan URL');return}
-  const btn=event.target;btn.disabled=true;btn.textContent='⏳ Cloning... 30 detik';
+  const btn=event.target;btn.disabled=true;btn.textContent='⏳ Cloning... 31 detik';
 
-  // Tampilkan loading clone (video 2)
-  showLoading('🔄 Clone website... 30 detik', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646964_PvBfjfBDcTyDG7dzOfHM.mp4');
+  showLoading('🔄 Clone website... 31 detik', 'https://raw.githubusercontent.com/NOVABOTV1F/NOVABOTV1F/main/tiktokio.com1787646964_PvBfjfBDcTyDG7dzOfHM.mp4');
 
-  // Jeda 30 detik
-  await new Promise(r=>setTimeout(r,30000));
+  // Jeda 31 detik
+  await new Promise(r=>setTimeout(r,31000));
 
   try{
     const res=await fetch('https://corsproxy.io/?'+encodeURIComponent(url));
@@ -253,4 +257,4 @@ function toast(msg){
 }
 </script>
 </body>
-</html>
+        </html>
