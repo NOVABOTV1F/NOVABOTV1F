@@ -69,7 +69,6 @@ input,select{width:100%;padding:.8rem;border-radius:14px;background:rgba(0,0,0,.
       <option value="netlify">Netlify</option>
     </select>
     <input type="text" id="siteName" placeholder="Nama website / repo">
-    <!-- Token API dihapus dari sini, ambil dari config.js -->
     <div class="upload-area" onclick="document.getElementById('fileIn').click()">
       📂 Klik pilih file (1–10 file)
       <input type="file" id="fileIn" multiple style="display:none">
@@ -104,7 +103,16 @@ input,select{width:100%;padding:.8rem;border-radius:14px;background:rgba(0,0,0,.
 
 <script src="config.js"></script>
 <script>
-// ===== INTRO =====
+// ===== INTRO — KLIK DI MANA AJA UNTUK MUTEK MUSIK =====
+document.addEventListener('click', function(){
+  const v = document.getElementById('introVid');
+  if(v && v.muted) {
+    v.muted = false;
+    v.play();
+  }
+}, { once: true });
+
+// ===== INTRO OVERLAY =====
 let introStarted=false;
 const intro=document.getElementById('intro');
 const introVid=document.getElementById('introVid');
@@ -144,7 +152,7 @@ function renderFiles(){
   document.getElementById('fileTags').innerHTML=files.map((f,i)=>`<span class="file-tag">📄 ${f.name}<span onclick="files.splice(${i},1);renderFiles()" style="cursor:pointer;margin-left:4px;color:#ef4444">×</span></span>`).join('');
 }
 
-// ===== DEPLOY =====
+// ===== DEPLOY (REAL) =====
 async function deploy(){
   const plat=document.getElementById('platSel').value;
   const token=getToken(plat);
@@ -158,6 +166,7 @@ async function deploy(){
   const text=document.getElementById('progText');
   btn.disabled=true;wrap.classList.add('on');
 
+  // Simulasi progress 30 detik
   for(let p=0;p<=100;p+=10){
     fill.style.width=p+'%';
     text.textContent=p+'%';
@@ -173,11 +182,15 @@ async function deploy(){
 function copyRes(){navigator.clipboard.writeText(document.getElementById('resLink').value);toast('Link tersalin')}
 function openRes(){window.open(document.getElementById('resLink').value,'_blank')}
 
-// ===== CLONE =====
+// ===== CLONE (30 detik jeda) =====
 async function cloneSite(){
   const url=document.getElementById('cloneUrl').value.trim();
   if(!url){toast('Masukkan URL');return}
-  const btn=event.target;btn.disabled=true;btn.textContent='⏳ Cloning...';
+  const btn=event.target;btn.disabled=true;btn.textContent='⏳ Cloning... 30 detik';
+  
+  // Jeda 30 detik
+  await new Promise(r=>setTimeout(r,30000));
+
   try{
     const res=await fetch('https://corsproxy.io/?'+encodeURIComponent(url));
     const html=await res.text();
